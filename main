@@ -1,0 +1,372 @@
+import random
+class Dot:
+    def __init__(self, x=0, y=0):
+        self.x = x
+        self.y = y
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+    @property
+    def get_dot(self):
+        return self.x, self.y
+
+    @property
+    def get_dotX(self):
+        return self.x
+
+    @property
+    def get_dotY(self):
+        return self.y
+
+    # def check_ship(self):
+    #
+    #     try:
+    #         p = list(self.cell)
+    #         p[0] += 1
+    #         for q in range(7):
+    #             if p == Board.list_ship[q][1]:
+    #
+    #         print(p)
+    #     except ValueError:
+    #         pass
+
+
+class Ship:
+    def __init__(self, long=0, peak=(), direction="", hp=0):
+        self.long = long
+        self.peak = peak
+        self.direction = direction
+        self.hp = hp
+
+    @property
+    def dots(self):
+        list_dots = []
+        list_dots.append(self.long), list_dots.append(self.peak), list_dots.append(self.direction), list_dots.append(
+            self.hp)
+        return list_dots
+
+class ErrorSetupShip(Exception):
+    pass
+
+class Check(Dot):
+
+    def exceptionDot(self, x, y):
+        try:
+            if (0 >= x or x >= 7) or (0 >= y or y >= 7):
+                raise ValueError()
+            return 'Координаты приняты'
+
+        except ValueError:
+            print('Неправильно введены координаты')
+            return False
+
+    def check_setup_ship(self, long, cell, position):
+        self.cell = list(cell)
+        self.long = long
+        self.position = position
+
+        try:
+            if self.position == 'H':
+                if self.long == 2:
+                    if self.cell[0] - 2 >= 0:
+                        if self.check_contuor(self.long, self.cell, self.position) == False:
+                            raise IndexError
+                        else:
+                            if self.list_board[self.cell[1] - 1][self.cell[0] - 2] == 'O':
+                                self.list_board[self.cell[1] - 1][self.cell[0] - 2] = '■'
+                                self.list_board[self.cell[1] - 1][self.cell[0] - 1] = '■'
+                            else:
+                                raise IndexError
+                    else:
+                        raise IndexError
+
+                elif self.long == 3:
+                    if self.check_contuor(self.long, self.cell, self.position) == False:
+                        raise IndexError
+                    else:
+                        if self.cell[0] - 3 >= 0:
+                            if self.list_board[self.cell[1] - 1][self.cell[0] - 2] == 'O' and \
+                            self.list_board[self.cell[1] - 1][self.cell[0] - 3] == 'O':
+                                self.list_board[self.cell[1] - 1][self.cell[0] - 3] = '■'
+                                self.list_board[self.cell[1] - 1][self.cell[0] - 2] = '■'
+                                self.list_board[self.cell[1] - 1][self.cell[0] - 1] = '■'
+                            else:
+                                raise IndexError
+                        else:
+                            raise IndexError
+                else:
+                    print('Установлено не верное значение в вызове метода')
+                    raise ValueError
+
+            elif self.position == 'V':
+                if self.long == 2:
+                    if self.check_contuor(self.long, self.cell, self.position) == False:
+                        raise IndexError
+                    else:
+                        if self.list_board[self.cell[1]][self.cell[0] - 1] == 'O':
+                            self.list_board[self.cell[1]][self.cell[0] - 1] = '■'
+                            self.list_board[self.cell[1] - 1][self.cell[0] - 1] = '■'
+                        else:
+                            raise IndexError
+
+                elif self.long == 3:
+                    if self.check_contuor(self.long, self.cell, self.position) == False:
+                        raise IndexError
+                    else:
+                        if self.list_board[self.cell[1]][self.cell[0] - 1] == 'O' and \
+                                self.list_board[self.cell[1] + 1][self.cell[0] - 1] == 'O':
+                            self.list_board[self.cell[1] + 1][self.cell[0] - 1] = '■'
+                            self.list_board[self.cell[1]][self.cell[0] - 1] = '■'
+                            self.list_board[self.cell[1] - 1][self.cell[0] - 1] = '■'
+                        else:
+                            raise IndexError
+
+                else:
+                    print('Установлено не верное значение в вызове метода')
+                    raise ValueError
+
+
+            elif self.position == 'OneShip':
+                if self.check_contuor(self.long, self.cell, self.position) == False:
+                    raise IndexError
+                else:
+                    if self.list_board[self.cell[1] - 1][self.cell[0] - 1] == 'O':
+                        self.list_board[self.cell[1] - 1][self.cell[0] - 1] = '■'
+
+                    else:
+                        raise IndexError
+            else:
+                raise IndexError
+
+        except IndexError:
+
+            return False
+
+    def check_contuor(self,long, coord, position):
+        x = coord[0] -1
+        y = coord[1] -1
+        combinations = [[x,y-1], [x-1, y-1], [x-1, y], [x-1, y+1], [x, y+1], [x+1, y+1], [x+1, y], [x+1, y-1]]
+        try:
+            if long == 1:
+                for combo in combinations: # Проверка координат после вычислений на то, чтобы они входили в нужный диапозон
+                    if (-1 >= combo[0] or combo[0] >= 6) or (-1 >= combo[1] or combo[1] >= 6):
+                        continue
+                    else:
+                        if self.list_board[combo[1]][combo[0]] == '■':
+                            raise IndexError
+            elif long == 2:
+                if position == 'H':
+                    combinationH = combinations.copy()
+                    combinationH.remove([x-1, y]) # Убираются лишние координаты и добавляются не достающие
+                    add_list = [[x-2, y-1],[x-2, y], [x-2, y+1]]
+
+                    for i in add_list:
+                        combinationH.append(i)
+
+                    for combo in combinationH:
+                        if (-1 >= combo[0] or combo[0] >= 6) or (-1 >= combo[1] or combo[1] >= 6):
+                            continue
+                        else:
+                            if self.list_board[combo[1]][combo[0]] == '■':
+                                raise IndexError
+                if position == 'V':
+                    combinationV = combinations.copy()
+                    combinationV.remove([x, y+1]) # Убираются лишние координаты и добавляются не достающие
+                    add_list = [[x+1, y+2],[x-1, y+2], [x, y+2]]
+
+                    for i in add_list:
+                        combinationV.append(i)
+                    # Проверка координат после вычислений на то, чтобы они входили в нужный диапозон
+                    for combo in combinationV:
+                        if (-1 >= combo[0] or combo[0] >= 6) or (-1 >= combo[1] or combo[1] >= 6):
+                            continue
+                        else:
+                            if self.list_board[combo[1]][combo[0]] == '■':
+                                raise IndexError
+            elif long == 3:
+                if position == 'H':
+                    combinationH = combinations.copy()
+                    combinationH.remove([x-1, y]) # Убираются лишние координаты и добавляются не достающие
+                    add_list = [[x-2, y-1], [x-2, y+1],[x-3, y+1], [x-3, y], [x-3, y-1]]
+
+                    for i in add_list:
+                        combinationH.append(i)
+
+                    for combo in combinationH:
+                        if (-1 >= combo[0] or combo[0] >= 6) or (-1 >= combo[1] or combo[1] >= 6):
+                            continue
+                        else:
+                            if self.list_board[combo[1]][combo[0]] == '■':
+                                raise IndexError
+                if position == 'V':
+                    combinationV = combinations.copy()
+                    combinationV.remove([x, y+1]) # Убираются лишние координаты и добавляются не достающие
+                    add_list = [[x+1, y+2],[x-1, y+2], [x, y+3], [x+1, y+3], [x-1, y+3]]
+
+                    for i in add_list:
+                        combinationV.append(i)
+                    # Проверка координат после вычислений на то, чтобы они входили в нужный диапозон
+                    for combo in combinationV:
+                        if (-1 >= combo[0] or combo[0] >= 6) or (-1 >= combo[1] or combo[1] >= 6):
+                            continue
+                        else:
+                            if self.list_board[combo[1]][combo[0]] == '■':
+                                raise IndexError
+            else:
+                print('Указаные неверные значение длины корабля')
+        except IndexError:
+            return False
+
+        else:
+            return True
+
+
+
+class Board(Check, Dot):
+    def __init__(self):
+        self.list_board = [['O'] * 6 for i in range(6)]
+        self.list_ship = []
+        self.count = 0
+        self.hid = True
+        self.live_ship = None
+
+
+
+    def add_ship(self, numb):
+        try:
+            if numb == 1:
+                print(f'Внесите данные коробля на {numb} клетку и его расположение')
+                cell = Dot(int(input('Введите координату x: ')), int(input('Введите координату y: ')))
+                pos = 'OneShip'
+                if self.exceptionDot(cell.get_dotX, cell.get_dotY) == False:
+                    raise ValueError
+                elif self.check_setup_ship(numb, cell.get_dot, pos) == False:
+                    print('Установить корабль нельзя')
+                    raise ValueError
+                else:
+                    ship = Ship(numb, cell.get_dot, pos, numb)
+                    self.list_ship.append(ship.dots)
+                    print('Значения приняты')
+                    return self.draw_board()
+            elif numb == 2 or numb == 3:
+                print(f'Внесите данные коробля на {numb} клетки и его расположение')
+                cell = Dot(int(input('Введите координату x: ')), int(input('Введите координату y: ')))
+                pos = input('Введите расположение горизонтальное(H) или вертикальное(V):')
+                if self.exceptionDot(cell.get_dotX, cell.get_dotY) == False:
+                    raise ValueError
+                elif self.check_setup_ship(numb, cell.get_dot, pos) == False:
+                    raise ValueError
+                else:
+                    ship = Ship(numb, cell.get_dot, pos, numb)
+                    self.list_ship.append(ship.dots)
+                    print('Значения приняты')
+                    return self.draw_board()
+
+        except ValueError:
+            print('Вы ввели неправильные координаты или значение расположения коробля')
+            print(self.draw_board())
+            return self.add_ship(numb, cell)
+
+    def add_shipAI(self, numb):
+        try:
+            if numb == 1:
+                if self.count == 1000:
+                    self.list_board = [['O'] * 6 for i in range(6)]
+                    self.list_ship = []
+                    self.count = 0
+                    return self.setupAIship()
+                else:
+                    cell = Dot(random.randint(1, 6), random.randint(1, 6))
+                    pos = 'OneShip'
+                    if self.check_setup_ship(numb, cell.get_dot, pos) == False:
+                        self.count += 1
+                        print(self.count)
+                        raise ErrorSetupShip('message')
+                    else:
+                        ship = Ship(numb, cell.get_dot, pos, numb)
+                        self.list_ship.append(ship.dots)
+                        return self.draw_board()
+
+            elif numb == 2 or numb == 3:
+                cell = Dot(random.randint(1,6), random.randint(1,6))
+                pos = random.choice(['H', 'V'])
+                if self.check_setup_ship(numb, cell.get_dot, pos) == False:
+                    raise ErrorSetupShip('message')
+                else:
+                    ship = Ship(numb, cell.get_dot, pos, numb)
+                    self.list_ship.append(ship.dots)
+                    return ''
+        except ErrorSetupShip:
+            return self.add_shipAI(numb)
+
+    #Функция которая описывает вокруг подбитого коробля
+    def contour(self):
+        pass
+
+    def draw_board(self):
+        _str = '  1|2|3|4|5|6|'
+        for draw, num in zip(self.list_board, range(1, 7)):
+            _str += '\n' + str(num) + '|'
+            for _draw in draw:
+                _str += _draw + '|'
+        return _str
+
+    def out(self):
+        return Check.exceptionDot()
+    #Функция выстрела
+    def shot(self):
+        try:
+            coord = set_dot()
+        except:
+            pass
+
+    def setupAIship(self):
+        print(self.add_shipAI(3))
+        for i in range(2):
+            print(self.add_shipAI(2))
+        for i in range(4):
+            print(self.add_shipAI(1))
+        print(self.list_ship)
+
+
+class Game(Board):
+
+    # def rules(self):
+    #     return ('''Рады приветствовать Вас в игре морской бой!!!
+    #              ---------------------------------------------
+    #                        П Р А В И Л А   И Г Р Ы
+    #              ---------------------------------------------
+    #              -
+    #     ''')
+
+    # def cycle_add_ship(self, coord = Dot(int(input('Введите координату x: ')), int(input('Введите координату y: ')))):
+    #     try:
+    #
+    #         if self.exceptionDot(coord.get_dotX, coord.get_dotY) == False:
+    #             raise ValueError
+    #     except ValueError:
+    #         self.cycle_add_ship()
+    #     else:
+    #         return coord
+
+
+    def check_win(self):
+        pass
+
+    def start(self):
+
+        Player = Game()
+        AI = Game()
+
+        print(Player.add_ship(3, dots))
+        for i in range(2):
+            print(Player.add_ship(2, dots))
+        for i in range(4):
+            print(Player.add_ship(1, dots))
+
+
+
+
+Games = Game()
+Games.setupAIship()
