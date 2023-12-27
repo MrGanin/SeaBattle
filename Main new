@@ -1,0 +1,300 @@
+import random
+class Dot:
+    def __init__(self, x=0, y=0):
+        self.x = x
+        self.y = y
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+    def input_cell(self):
+        while True:
+            try:
+                self.x = int(input('Введите координату x\t'))
+                self.y = int(input('Введите координату y\t'))
+                if (0 >= self.x or self.x >= 7) or (0 >= self.y or self.y >= 7):
+                    print('Вы ввели некороктные координаты')
+                    continue
+                else:
+                    break
+            except ValueError:
+                print('Необходимо вводить число')
+                continue
+        return [self.x, self.y]
+
+    @property
+    def get_dot(self):
+        return [self.x, self.y]
+
+    def set_dot(self, x, y):
+        if (0 >= x or x >= 7) or (0 >= y or y >= 7):
+           return 'Введены некороктные координаты'
+        else:
+            self.x = x
+            self.y = y
+            return [self.x, self.y]
+
+
+    @property
+    def get_dotX(self):
+        return self.x
+
+    @property
+    def get_dotY(self):
+        return self.y
+
+    # def check_ship(self):
+    #
+    #     try:
+    #         p = list(self.cell)
+    #         p[0] += 1
+    #         for q in range(7):
+    #             if p == Board.list_ship[q][1]:
+    #
+    #         print(p)
+    #     except ValueError:
+    #         pass
+
+
+class Ship:
+    def __init__(self, long=0, coord=(), position="", hp=0):
+        self.long = long
+        self.coord = list(coord)
+        self.position = position
+        self.hp = hp
+
+    @property
+    def dots(self):
+        long = self.long
+        list_dots = []
+        shipparam = []
+        for i in range(self.long):
+            long = long - 1
+            if self.position == 'V':
+                list_dots.append([self.coord[0], self.coord[1] + long])
+            else:
+                list_dots.append([self.coord[0] - long, self.coord[1]])
+
+        shipparam.append(self.long), shipparam.append(list_dots), shipparam.append(self.position), shipparam.append(
+            self.hp)
+        return shipparam
+
+class ErrorSetupShip(Exception):
+    pass
+
+class Check(Dot):
+    def setupcheck(self, dots):
+        for d in dots:
+            y = d[1] - 1
+            x = d[0] - 1
+            if self.list_board[y][x] == 'O':
+                return True
+            else:
+                return False
+
+
+
+
+
+class Board(Check, Dot):
+    def __init__(self):
+        self.list_board = [['O'] * 6 for i in range(6)]
+        self.list_ship = []
+        self.count = 0
+        self.hid = True
+        self.live_ship = None
+
+
+    def ship_add(self, passage, long, arg='bot'):
+        cont = 0
+        cont2 = 0
+        i = 1
+        while cont < passage:
+            if arg == 'bot':
+
+                print('Новый цикл', i)
+                i +=1
+                print(cont2)
+                if cont2 == 100:
+                    
+                    self.start()
+
+
+                x = random.randint(1,6)
+                y = random.randint(1,6)
+                cell = [x, y]
+
+                p = random.choice(['H', 'V'])
+                ship = Ship(long, cell, p, long)
+
+                if self.setupcheck([cell]) == False or self.out(ship.dots[1]) == False or self.contour(long, cell, p) == False:
+                    print('Неверный ввод, повторите')
+                    cont2 += 1
+
+                    print(cont2)
+                    continue
+
+                else:
+                    cont += 1
+                    self.list_ship.append(ship.dots)
+                    for add in ship.dots[1]:
+                        self.list_board[add[1] - 1][add[0] - 1] = '■'
+
+            else:
+
+                cell = self.input_cell()
+                p = input('Введите положение корабля (вертикальное "V" / горизонтальное "H"): ') # Сделать методом
+                ship = Ship(long, cell, p, long)
+
+                if p != 'V' and p != 'H':
+                    print('Положение корабля введено не корректно, повторите')
+                    continue
+
+                elif self.setupcheck([cell]) == False or self.out(ship.dots[1]) == False:
+                    print('Неверный ввод, повторите')
+                    continue
+
+                else:
+                    cont +=1
+                    self.list_ship.append(ship.dots)
+                    for add in ship.dots[1]:
+                        self.list_board[add[1]-1][add[0]-1] = '■'
+
+
+    #Функция которая описывает вокруг подбитого коробля
+    def contour(self, long, coord, position):
+        x = coord[0]
+        y = coord[1]
+        combinations = [[x, y - 1], [x + 1, y - 1], [x + 1, y], [x + 1, y + 1], [x - 1, y + 1], [x - 1, y],
+                        [x - 1, y - 1], [x, y + 1]]
+
+        try:
+            for i in range(1):
+                if position == 'V':
+
+                    for j in range(2, long + 1):
+
+                        combinations.append([x - 1, y + j])
+                        combinations.append([x + 1, y + j])
+
+                    combinations.remove([x, y + 1])
+                    combinations.append([x, y + long])
+
+                elif position == 'H':
+                    for j in range(2, long + 1):
+                        combinations.append([x - j, y - 1])
+                        combinations.append([x - j, y + 1])
+
+                    combinations.remove([x - 1, y])
+                    combinations.append([x - long, y])
+
+                else:
+                    print('Неверные данные')
+                    break
+
+            for combo in combinations:  # Проверка координат после вычислений на то, чтобы они входили в нужный диапозон
+                if (0 >= combo[0] or combo[0] >= 7) or (0 >= combo[1] or combo[1] >= 7):
+                    continue
+                else:
+                    if self.list_board[combo[1] - 1][combo[0] - 1] == '■':
+                        raise IndexError
+
+        except IndexError:
+            return False
+
+    def draw_board(self):
+        _str = '  1|2|3|4|5|6|'
+        for draw, num in zip(self.list_board, range(1, 7)):
+            _str += '\n' + str(num) + '|'
+            for _draw in draw:
+                _str += _draw + '|'
+        return _str
+
+    def out(self, dot):
+        try:
+            for c in dot:
+                if (0 >= c[0] or c[0] >= 7) or (0 >= c[1] or c[1] >= 7):
+                    raise IndexError
+                else:
+                    return True
+
+        except IndexError:
+            return False
+
+
+
+
+    #Функция выстрела
+    def shot(self):
+        try:
+            coord = set_dot()
+        except:
+            pass
+
+    def setupAIship(self):
+        print(self.add_shipAI(3))
+        for i in range(2):
+            print(self.add_shipAI(2))
+        for i in range(4):
+            print(self.add_shipAI(1))
+        print(self.list_ship)
+#
+# cell = Dot(3,1)
+# c = cell.get_dot
+# ship = Ship(3, c, 'H', 3)
+# lsh = ship.dots
+# b = Board()
+# b.list_board[3][0] = '■'
+# print(b.draw_board())
+# print(lsh)
+# print(lsh[0], lsh[1], lsh[2])
+# print(b.out(lsh[1]))
+class Game(Board):
+
+    # def rules(self):
+    #     return ('''Рады приветствовать Вас в игре морской бой!!!
+    #              ---------------------------------------------
+    #                        П Р А В И Л А   И Г Р Ы
+    #              ---------------------------------------------
+    #              -
+    #     ''')
+
+    # def cycle_add_ship(self, coord = Dot(int(input('Введите координату x: ')), int(input('Введите координату y: ')))):
+    #     try:
+    #
+    #         if self.exceptionDot(coord.get_dotX, coord.get_dotY) == False:
+    #             raise ValueError
+    #     except ValueError:
+    #         self.cycle_add_ship()
+    #     else:
+    #         return coord
+
+
+    def check_win(self):
+        pass
+
+    def start(self):
+        AI = Game()
+        print('Введите координаты 3 палубного корабля')
+        print(AI.ship_add(1, 3, 'bot'))
+        print(AI.ship_add(2, 2, 'bot'))
+        print(AI.ship_add(4, 1, 'bot'))
+        print(AI.draw_board())
+
+
+
+
+
+# b = Board()
+# # b.list_board[0][0] = '■'
+# # print(b.list_board)
+# # # print('Введите координаты 1 палубного корабля')
+# # # print(b.ship_add(4,1))
+# print('Введите координаты 3 палубного корабля')
+# print(b.ship_add(1, 3, 'bot'))
+# print(b.ship_add(2, 2, 'bot'))
+# print(b.ship_add(4, 1, 'bot'))
+# print(b.draw_board())
+
+Games = Game()
+Games.start()
